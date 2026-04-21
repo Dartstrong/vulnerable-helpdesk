@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Тикет #{{ ticket.id }} - HelpDesk{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">Тикет #{{ ticket.id }}: {{ ticket.title }}</h5>
+                        <small class="text-muted">Создан {{ ticket.created_by.username }} • {{ ticket.created_at|date:"d.m.Y H:i" }}</small>
+                    </div>
+                    <div>
+                        {% if ticket.status == 'open' %}
+                            <span class="badge bg-warning">Открыт</span>
+                        {% elif ticket.status == 'in_progress' %}
+                            <span class="badge bg-info">В работе</span>
+                        {% elif ticket.status == 'resolved' %}
+                            <span class="badge bg-success">Решен</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Закрыт</span>
+                        {% endif %}
+                        
+                        {% if ticket.priority == 'critical' %}
+                            <span class="badge bg-danger">Критический</span>
+                        {% elif ticket.priority == 'high' %}
+                            <span class="badge bg-warning text-dark">Высокий</span>
+                        {% elif ticket.priority == 'medium' %}
+                            <span class="badge bg-primary">Средний</span>
+                        {% else %}
+                            <span class="badge bg-success">Низкий</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6>Описание проблемы:</h6>
+                    <div class="bg-light p-3 rounded">
+                        {{ ticket.description|linebreaks }}
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Детали:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Создатель:</strong> {{ ticket.created_by.username }}</p>
+                            <p><strong>Создан:</strong> {{ ticket.created_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Обновлен:</strong> {{ ticket.updated_at|date:"d.m.Y H:i" }}</p>
+                            <p><strong>ID:</strong> {{ ticket.id }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if comments %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Комментарии ({{ comments|length }})</h6>
+            </div>
+            <div class="card-body">
+                {% for comment in comments %}
+                <div class="border-start border-3 border-primary ps-3 mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <strong>{{ comment.author.username }}</strong>
+                        <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+                    </div>
+                    <p class="mb-0">{{ comment.content|linebreaks }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if user.is_authenticated %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Добавить комментарий</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea name="comment" class="form-control" rows="4" 
+                                  placeholder="Введите ваш комментарий..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-comment me-2"></i>Добавить комментарий
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Действия с тикетом</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/search/?created_by__username={{ ticket.created_by.username }}" 
+                       class="btn btn-outline-primary">
+                        Все тикеты этого пользователя
+                    </a>
+                    <a href="/search/?status={{ ticket.status }}" 
+                       class="btn btn-outline-secondary">
+                        Все тикеты со статусом "{{ ticket.get_status_display }}"
+                    </a>
+                    <a href="/export/" class="btn btn-outline-success">
+                        Экспортировать данные
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Информация</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Этот тикет является частью демонстрационной системы HelpDesk.
+                    Все данные являются тестовыми.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

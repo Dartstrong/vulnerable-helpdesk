@@ -1,0 +1,389 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Поиск тикетов - HelpDesk{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-card {
+        transition: all 0.3s;
+    }
+    .filter-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card filter-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Фильтры поиска</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" action="/search/" id="searchForm">
+                    {% if not request.user.is_superuser %}
+                    <!-- Для обычных пользователей всегда скрытое поле с их именем -->
+                    <input type="hidden" name="created_by__username" value="{{ request.user.username }}">
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Статус</label>
+                        <select name="status" class="form-select" id="statusSelect">
+                            <option value="">Все статусы</option>
+                            <option value="open" {% if search_params.status == 'open' %}selected{% endif %}>Открыт</option>
+                            <option value="in_progress" {% if search_params.status == 'in_progress' %}selected{% endif %}>В работе</option>
+                            <option value="resolved" {% if search_params.status == 'resolved' %}selected{% endif %}>Решен</option>
+                            <option value="closed" {% if search_params.status == 'closed' %}selected{% endif %}>Закрыт</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Приоритет</label>
+                        <select name="priority" class="form-select" id="prioritySelect">
+                            <option value="">Все приоритеты</option>
+                            <option value="low" {% if search_params.priority == 'low' %}selected{% endif %}>Низкий</option>
+                            <option value="medium" {% if search_params.priority == 'medium' %}selected{% endif %}>Средний</option>
+                            <option value="high" {% if search_params.priority == 'high' %}selected{% endif %}>Высокий</option>
+                            <option value="critical" {% if search_params.priority == 'critical' %}selected{% endif %}>Критический</option>
+                        </select>
+                    </div>
+
+                    {% if request.user.is_superuser %}
+                    <div class="mb-3">
+                        <label class="form-label">Пользователь</label>
+                        <input type="text" name="created_by__username" class="form-control" id="usernameInput"
+                               placeholder="Имя пользователя" value="{{ search_params.created_by__username|default:'' }}">
+                        <small class="text-muted">Оставьте пустым для поиска по всем пользователям</small>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Поиск по тексту</label>
+                        <input type="text" name="title__contains" class="form-control" id="titleInput"
+                               placeholder="Содержит текст..." value="{{ search_params.title__contains }}">
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Найти тикеты
+                        </button>
+                        
+                        {% if search_params %}
+                        <button type="button" class="btn btn-outline-secondary" id="clearFilters">
+                            <i class="fas fa-times me-2"></i>Сбросить фильтры
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not request.user.is_superuser %}
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            Вы будете искать только свои тикеты
+                        </small>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Примеры поиска</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% if not request.user.is_superuser %}
+                    <a href="/search/?created_by__username={{ request.user.username }}&status=open" class="list-group-item list-group-item-action">
+                        Мои открытые тикеты
+                    </a>
+                    <a href="/search/?created_by__username={{ request.user.username }}&priority=critical" class="list-group-item list-group-item-action">
+                        Мои критические тикеты
+                    </a>
+                    <a href="/search/?created_by__username={{ request.user.username }}&status=open&priority=high" class="list-group-item list-group-item-action">
+                        Мои открытые с высоким приоритетом
+                    </a>
+                    {% else %}
+                    <a href="/search/?status=open" class="list-group-item list-group-item-action">
+                        Все открытые тикеты
+                    </a>
+                    <a href="/search/?priority=critical" class="list-group-item list-group-item-action">
+                        Критические тикеты
+                    </a>
+                    <a href="/search/?status=open&priority=high" class="list-group-item list-group-item-action">
+                        Открытые с высоким приоритетом
+                    </a>
+                    <a href="/search/?created_by__username=admin" class="list-group-item list-group-item-action">
+                        Тикеты пользователя "admin"
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    {% if not request.user.is_superuser %}
+                    Мои тикеты
+                    {% else %}
+                    Результаты поиска
+                    {% endif %}
+                    {% if tickets %}
+                    <small class="text-muted fs-6 ms-2">(найдено: {{ tickets.count }})</small>
+                    {% endif %}
+                </h5>
+                {% if tickets and search_params %}
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-info me-2" id="activeFiltersBadge">
+                        <i class="fas fa-filter me-1"></i>Фильтры активны
+                    </span>
+                    <span class="badge bg-primary">{{ tickets.count }} тикетов</span>
+                </div>
+                {% elif tickets %}
+                <span class="badge bg-primary">{{ tickets.count }} тикетов</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if tickets %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Тема</th>
+                                <th>Статус</th>
+                                <th>Приоритет</th>
+                                {% if request.user.is_superuser %}
+                                <th>Автор</th>
+                                {% endif %}
+                                <th>Дата</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets %}
+                            <tr>
+                                <td>#{{ ticket.id }}</td>
+                                <td>{{ ticket.title|truncatechars:50 }}</td>
+                                <td>
+                                    {% if ticket.status == 'open' %}
+                                        <span class="badge bg-warning">Открыт</span>
+                                    {% elif ticket.status == 'in_progress' %}
+                                        <span class="badge bg-info">В работе</span>
+                                    {% elif ticket.status == 'resolved' %}
+                                        <span class="badge bg-success">Решен</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Закрыт</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if ticket.priority == 'critical' %}
+                                        <span class="badge bg-danger">Критический</span>
+                                    {% elif ticket.priority == 'high' %}
+                                        <span class="badge bg-warning text-dark">Высокий</span>
+                                    {% elif ticket.priority == 'medium' %}
+                                        <span class="badge bg-primary">Средний</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Низкий</span>
+                                    {% endif %}
+                                </td>
+                                {% if request.user.is_superuser %}
+                                <td>{{ ticket.created_by.username }}</td>
+                                {% endif %}
+                                <td>{{ ticket.created_at|date:"d.m.Y" }}</td>
+                                <td>
+                                    <a href="/tickets/{{ ticket.id }}/" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Тикеты не найдены</p>
+                    <p class="text-muted small">
+                        {% if not request.user.is_superuser %}
+                        У вас нет тикетов с такими параметрами поиска
+                        {% else %}
+                        Тикеты не найдены по заданным параметрам
+                        {% endif %}
+                    </p>
+                    {% if search_params %}
+                    <a href="/search/" class="btn btn-outline-primary mt-3">
+                        <i class="fas fa-times me-2"></i>Сбросить фильтры
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchForm = document.getElementById('searchForm');
+        const isSuperuser = {{ request.user.is_superuser|yesno:"true,false" }};
+        
+        // Перенаправление на страницу с параметром created_by__username при загрузке
+        if (window.location.search === '' || 
+            (!window.location.search.includes('created_by__username=') && !isSuperuser)) {
+            
+            const baseUrl = '/search/';
+            let newUrl;
+            
+            if (!isSuperuser) {
+                // Для обычных пользователей добавляем их имя
+                newUrl = baseUrl + '?created_by__username=' + encodeURIComponent('{{ request.user.username }}');
+            } else {
+                // Для админов добавляем пустой параметр (чтобы видеть все тикеты)
+                newUrl = baseUrl + '?created_by__username=';
+            }
+            
+            // Сохраняем текущие параметры (если они есть кроме created_by__username)
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.delete('created_by__username'); // Удаляем старый параметр если есть
+            
+            // Добавляем новый параметр created_by__username
+            if (!isSuperuser) {
+                currentParams.set('created_by__username', '{{ request.user.username }}');
+            } else {
+                currentParams.set('created_by__username', '');
+            }
+            
+            // Формируем новый URL
+            const finalUrl = baseUrl + (currentParams.toString() ? '?' + currentParams.toString() : '');
+            
+            // Если URL изменился, перенаправляем
+            if (finalUrl !== window.location.href.split('?')[0] + '?' + window.location.search) {
+                window.history.replaceState(null, '', finalUrl);
+                // Перезагружаем страницу для применения параметров
+                window.location.reload();
+            }
+        }
+        
+        // Функция для удаления пустых полей из формы перед отправкой
+        function removeEmptyFields(event) {
+            // Находим все элементы формы
+            const formElements = searchForm.elements;
+            
+            // Для каждого элемента
+            for (let element of formElements) {
+                // Пропускаем кнопки
+                if (element.type === 'submit' || element.type === 'button') {
+                    continue;
+                }
+                
+                // Проверяем значение элемента
+                let value = element.value;
+                
+                if (element.type === 'select-one') {
+                    // Для select проверяем выбранное значение
+                    if (value === '') {
+                        // Удаляем параметр из URL
+                        element.disabled = true;
+                    }
+                } else if (element.type === 'text') {
+                    // Для текстовых полей проверяем на пустоту и пробелы
+                    if (!value || value.trim() === '') {
+                        element.disabled = true;
+                    }
+                }
+            }
+            
+            // Для администраторов: если поле created_by__username пустое, все равно оставляем его
+            // но с пустым значением, чтобы видеть все тикеты
+            if (isSuperuser) {
+                const usernameField = document.getElementById('usernameInput');
+                if (usernameField && (!usernameField.value || usernameField.value.trim() === '')) {
+                    // Создаем скрытое поле с пустым значением
+                    const hiddenField = document.createElement('input');
+                    hiddenField.type = 'hidden';
+                    hiddenField.name = 'created_by__username';
+                    hiddenField.value = '';
+                    searchForm.appendChild(hiddenField);
+                    usernameField.disabled = true;
+                }
+            }
+        }
+        
+        // Обработчик отправки формы
+        if (searchForm) {
+            searchForm.addEventListener('submit', removeEmptyFields);
+        }
+        
+        // Обработчик кнопки "Сбросить фильтры"
+        const clearFiltersBtn = document.getElementById('clearFilters');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', function() {
+                if (!isSuperuser) {
+                    window.location.href = '/search/?created_by__username=' + encodeURIComponent('{{ request.user.username }}');
+                } else {
+                    window.location.href = '/search/?created_by__username=';
+                }
+            });
+        }
+        
+        // Добавляем created_by__username в ссылки примеров поиска для обычных пользователей
+        if (!isSuperuser) {
+            // Находим все ссылки в примерах поиска
+            const exampleLinks = document.querySelectorAll('.list-group-item[href^="/search/"]');
+            
+            exampleLinks.forEach(link => {
+                const currentUrl = link.getAttribute('href');
+                // Проверяем, есть ли уже created_by__username в ссылке
+                if (!currentUrl.includes('created_by__username=')) {
+                    // Добавляем параметр created_by__username
+                    const separator = currentUrl.includes('?') ? '&' : '?';
+                    const newUrl = currentUrl + separator + 'created_by__username=' + encodeURIComponent('{{ request.user.username }}');
+                    link.setAttribute('href', newUrl);
+                }
+            });
+        }
+        
+        // Функция для подсветки активных фильтров
+        function highlightActiveFilters() {
+            const statusSelect = document.getElementById('statusSelect');
+            const prioritySelect = document.getElementById('prioritySelect');
+            const titleInput = document.getElementById('titleInput');
+            
+            if (statusSelect && statusSelect.value !== '') {
+                statusSelect.classList.add('border', 'border-primary');
+            }
+            
+            if (prioritySelect && prioritySelect.value !== '') {
+                prioritySelect.classList.add('border', 'border-primary');
+            }
+            
+            if (titleInput && titleInput.value.trim() !== '') {
+                titleInput.classList.add('border', 'border-primary');
+            }
+        }
+        
+        // Вызываем функцию подсветки при загрузке
+        highlightActiveFilters();
+        
+        // Обработка поля created_by__username для администраторов при загрузке
+        if (isSuperuser) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const usernameParam = urlParams.get('created_by__username');
+            const usernameInput = document.getElementById('usernameInput');
+            
+            if (usernameInput && usernameParam !== null) {
+                usernameInput.value = usernameParam;
+            }
+        }
+    });
+</script>
+{% endblock %}

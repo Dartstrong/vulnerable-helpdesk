@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Создание тикета - HelpDesk{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Создание нового тикета</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Тема тикета *</label>
+                        <input type="text" name="title" id="title" class="form-control" 
+                               placeholder="Краткое описание проблемы" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="priority" class="form-label">Приоритет</label>
+                        <select name="priority" id="priority" class="form-select">
+                            <option value="low">Низкий</option>
+                            <option value="medium" selected>Средний</option>
+                            <option value="high">Высокий</option>
+                            <option value="critical">Критический</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="description" class="form-label">Подробное описание *</label>
+                        <textarea name="description" id="description" class="form-control" 
+                                  rows="8" placeholder="Опишите проблему максимально подробно..." required></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/dashboard/" class="btn btn-outline-secondary me-md-2">Отмена</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>Создать тикет
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6>Полезные советы:</h6>
+                <ul class="mb-0">
+                    <li>Указывайте точное название проблемы</li>
+                    <li>Описывайте шаги воспроизведения</li>
+                    <li>При необходимости прикрепляйте скриншоты (в следующей версии)</li>
+                    <li>Выбирайте приоритет соответственно срочности</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

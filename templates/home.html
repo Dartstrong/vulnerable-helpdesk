@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - HelpDesk{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h1 class="card-title">Добро пожаловать в систему поддержки HelpDesk</h1>
+                <p class="lead">Централизованная система управления запросами и инцидентами</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-ticket-alt fa-3x text-primary mb-3"></i>
+                                <h5>Создание тикетов</h5>
+                                <p>Быстрое создание запросов в службу поддержки</p>
+                                <a href="/tickets/create/" class="btn btn-primary">Создать тикет</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-search fa-3x text-success mb-3"></i>
+                                <h5>Поиск и фильтрация</h5>
+                                <p>Удобный поиск по всем тикетам системы</p>
+                                <a href="/search/" class="btn btn-success">Найти тикеты</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-chart-line fa-3x text-warning mb-3"></i>
+                                <h5>Аналитика</h5>
+                                <p>Отслеживание статусов и статистика</p>
+                                <a href="/dashboard/" class="btn btn-warning">Панель управления</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Последние обновления системы</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Добавлена расширенная фильтрация тикетов
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Улучшен интерфейс создания тикетов
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Добавлена функция экспорта данных
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Быстрые действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/tickets/create/" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Создать новый тикет
+                    </a>
+                    <a href="/search/?status=open" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>Открытые тикеты
+                    </a>
+                    <a href="/search/?priority=critical" class="btn btn-outline-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Критические тикеты
+                    </a>
+                    <a href="/export/" class="btn btn-outline-success">
+                        <i class="fas fa-download me-2"></i>Экспорт данных
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Контакты поддержки</h5>
+            </div>
+            <div class="card-body">
+                <p><i class="fas fa-phone me-2"></i>+7 (495) 123-45-67</p>
+                <p><i class="fas fa-envelope me-2"></i>support@company.local</p>
+                <p><i class="fas fa-clock me-2"></i>Пн-Пт: 9:00-18:00</p>
+                <p class="text-muted small">Для срочных вопросов используйте тикеты с высоким приоритетом</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
